@@ -1,0 +1,67 @@
+name: Law Collector
+
+on:
+  # 매일 00:00 KST (15:00 UTC 전날)
+  schedule:
+    - cron: '0 15 * * *'
+  
+  # 수동 트리거
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Force update even if no changes detected'
+        required: false
+        default: 'false'
+
+jobs:
+  collect-laws:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Initialize database
+        run: npm run db:init
+
+      - name: Run law collection
+        env:
+          LAW_API_KEY: ${{ secrets.LAW_API_KEY }}
+          NODE_ENV: production
+        run: npm run collect:laws
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if [ -f "./data/tax_calculator.db" ]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -A
+          git diff --staged --quiet || git commit -m "chore: update law rules [automated]"
+          git push || echo "No changes to push"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Law collection failed. Please check the logs."
+          # 추가: Slack/Email 알림 설정 가능

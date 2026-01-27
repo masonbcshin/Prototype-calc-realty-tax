@@ -1,0 +1,44 @@
+{
+  "description": "케이스 1: 1세대1주택 비과세",
+  "request": {
+    "acquisitionDate": "2016-03-15",
+    "acquisitionPrice": 350000000,
+    "dispositionDate": "2026-04-01",
+    "dispositionPrice": 500000000,
+    "address": "서울특별시 마포구 상암동",
+    "ownerCount": 1,
+    "isPrimaryResidence": true,
+    "residenceYears": 10
+  },
+  "response": {
+    "success": true,
+    "data": {
+      "taxBeforeSurtax": 0,
+      "surtax": 0,
+      "totalTax": 0,
+      "applies": {
+        "oneHouseExemption": true,
+        "longHoldDeduction": 0,
+        "isAdjustedArea": true,
+        "multiHouseSurtax": false,
+        "shortTermSurtax": false
+      },
+      "details": {
+        "holdingPeriodYears": 10,
+        "taxableGain": 0,
+        "deductions": 150000000,
+        "taxBase": 0,
+        "appliedBracket": null
+      },
+      "appliedRules": ["RULE_DEFAULT"],
+      "lawVersions": [
+        {
+          "law_id": "LAW_DEFAULT_INCOME",
+          "version_date": "2025-01-01"
+        }
+      ],
+      "notes": "이 계산은 공개된 법령 텍스트를 기반으로 자동 추출된 규칙을 사용했습니다. 정확성을 보장하지 않으며, 법적·세무적 자문이 아닙니다. 실제 신고 전 반드시 세무사·전문가와 상담하세요. 1세대1주택 비과세 요건 충족."
+    },
+    "timestamp": "2026-01-27T00:00:00.000Z"
+  }
+}

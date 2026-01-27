@@ -1,0 +1,48 @@
+{
+  "description": "케이스 2: 일반 양도 (장기보유공제 적용)",
+  "request": {
+    "acquisitionDate": "2016-01-01",
+    "acquisitionPrice": 300000000,
+    "dispositionDate": "2026-01-01",
+    "dispositionPrice": 450000000,
+    "address": "경기도 용인시",
+    "ownerCount": 1,
+    "isPrimaryResidence": false
+  },
+  "response": {
+    "success": true,
+    "data": {
+      "taxBeforeSurtax": 18345000,
+      "surtax": 0,
+      "totalTax": 18345000,
+      "applies": {
+        "oneHouseExemption": false,
+        "longHoldDeduction": 0.2,
+        "isAdjustedArea": false,
+        "multiHouseSurtax": false,
+        "shortTermSurtax": false
+      },
+      "details": {
+        "holdingPeriodYears": 10,
+        "taxableGain": 150000000,
+        "deductions": 32500000,
+        "taxBase": 117500000,
+        "appliedBracket": {
+          "from": 88000001,
+          "to": 150000000,
+          "rate": 35,
+          "deduction": 15440000
+        }
+      },
+      "appliedRules": ["RULE_DEFAULT"],
+      "lawVersions": [
+        {
+          "law_id": "LAW_DEFAULT_INCOME",
+          "version_date": "2025-01-01"
+        }
+      ],
+      "notes": "이 계산은 공개된 법령 텍스트를 기반으로 자동 추출된 규칙을 사용했습니다. 정확성을 보장하지 않으며, 법적·세무적 자문이 아닙니다."
+    },
+    "timestamp": "2026-01-27T00:00:00.000Z"
+  }
+}

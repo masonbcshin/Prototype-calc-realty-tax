@@ -1,0 +1,451 @@
+openapi: 3.0.3
+info:
+  title: 부동산 거래세/양도소득세 계산기 API
+  description: |
+    법제처 Open API 기반 부동산 양도소득세, 취득세 자동 계산 서비스.
+    
+    **면책 조항**: 이 서비스는 정보제공용이며 법률·세무 자문이 아닙니다. 
+    실제 신고 전 반드시 세무사·전문가와 상담하세요.
+  version: 1.0.0
+  contact:
+    name: API Support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: 로컬 개발 서버
+
+tags:
+  - name: Calculation
+    description: 세금 계산 API
+  - name: Admin
+    description: 관리자 API (인증 필요)
+
+paths:
+  /calc:
+    post:
+      tags:
+        - Calculation
+      summary: 양도소득세 계산
+      description: 입력된 부동산 거래 정보를 바탕으로 양도소득세를 계산합니다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CapitalGainsInput'
+            example:
+              acquisitionDate: "2016-03-15"
+              acquisitionPrice: 350000000
+              dispositionDate: "2026-04-01"
+              dispositionPrice: 500000000
+              address: "서울특별시 마포구 상암동"
+              ownerCount: 1
+              isPrimaryResidence: true
+              residenceYears: 10
+      responses:
+        '200':
+          description: 계산 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapitalGainsResponse'
+        '400':
+          description: 입력값 검증 실패
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 서버 오류
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /calc/acquisition-tax:
+    post:
+      tags:
+        - Calculation
+      summary: 취득세 계산
+      description: 입력된 부동산 취득 정보를 바탕으로 취득세를 계산합니다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcquisitionTaxInput'
+            example:
+              acquisitionPrice: 500000000
+              address: "서울특별시 강남구"
+              ownerCount: 1
+              isResidential: true
+      responses:
+        '200':
+          description: 계산 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcquisitionTaxResponse'
+        '400':
+          description: 입력값 검증 실패
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /calc/rules:
+    get:
+      tags:
+        - Calculation
+      summary: 활성 규칙 조회
+      description: 현재 계산에 사용되는 활성 규칙 정보를 조회합니다.
+      responses:
+        '200':
+          description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveRulesResponse'
+
+  /health:
+    get:
+      tags:
+        - Calculation
+      summary: 헬스 체크
+      description: 서버 상태를 확인합니다.
+      responses:
+        '200':
+          description: 서버 정상
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        example: healthy
+                      timestamp:
+                        type: string
+                        format: date-time
+
+  /admin/refresh-laws:
+    post:
+      tags:
+        - Admin
+      summary: 법령 수집 수동 트리거
+      description: 법제처 API에서 법령을 수동으로 수집합니다.
+      security:
+        - AdminToken: []
+      responses:
+        '200':
+          description: 수집 완료
+        '401':
+          description: 인증 실패
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/rules/history:
+    get:
+      tags:
+        - Admin
+      summary: 규칙 변경 이력 조회
+      security:
+        - AdminToken: []
+      parameters:
+        - name: ruleType
+          in: query
+          schema:
+            type: string
+            enum: [capital_gains, acquisition_tax]
+          description: 규칙 유형
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: 조회할 이력 수
+      responses:
+        '200':
+          description: 조회 성공
+        '401':
+          description: 인증 실패
+
+  /admin/rules/activate:
+    post:
+      tags:
+        - Admin
+      summary: 규칙 수동 활성화
+      security:
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ruleType
+                - ruleId
+              properties:
+                ruleType:
+                  type: string
+                  enum: [capital_gains, acquisition_tax]
+                ruleId:
+                  type: string
+      responses:
+        '200':
+          description: 활성화 성공
+        '401':
+          description: 인증 실패
+
+  /admin/rules/rollback:
+    post:
+      tags:
+        - Admin
+      summary: 규칙 롤백
+      security:
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ruleType
+                - targetRuleId
+              properties:
+                ruleType:
+                  type: string
+                  enum: [capital_gains, acquisition_tax]
+                targetRuleId:
+                  type: string
+      responses:
+        '200':
+          description: 롤백 성공
+        '401':
+          description: 인증 실패
+
+components:
+  securitySchemes:
+    AdminToken:
+      type: apiKey
+      in: header
+      name: x-admin-token
+      description: 관리자 인증 토큰
+
+  schemas:
+    CapitalGainsInput:
+      type: object
+      required:
+        - acquisitionDate
+        - acquisitionPrice
+        - dispositionDate
+        - dispositionPrice
+        - address
+        - ownerCount
+      properties:
+        acquisitionDate:
+          type: string
+          format: date
+          description: 취득일 (YYYY-MM-DD)
+        acquisitionPrice:
+          type: integer
+          minimum: 0
+          description: 취득가액 (원)
+        dispositionDate:
+          type: string
+          format: date
+          description: 양도일 (YYYY-MM-DD)
+        dispositionPrice:
+          type: integer
+          minimum: 0
+          description: 양도가액 (원)
+        address:
+          type: string
+          description: 주소 (시군구 단위)
+        ownerCount:
+          type: integer
+          minimum: 1
+          description: 보유 주택 수
+        isPrimaryResidence:
+          type: boolean
+          description: 실거주 여부
+        residenceYears:
+          type: number
+          minimum: 0
+          description: 거주 기간 (년)
+        necessaryExpenses:
+          type: integer
+          minimum: 0
+          description: 필요경비 (원)
+
+    AcquisitionTaxInput:
+      type: object
+      required:
+        - acquisitionPrice
+        - address
+        - ownerCount
+      properties:
+        acquisitionPrice:
+          type: integer
+          minimum: 0
+          description: 취득가액 (원)
+        address:
+          type: string
+          description: 주소 (시군구 단위)
+        ownerCount:
+          type: integer
+          minimum: 1
+          description: 보유 주택 수
+        isResidential:
+          type: boolean
+          default: true
+          description: 주거용 여부
+
+    CapitalGainsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            taxBeforeSurtax:
+              type: integer
+              description: 중과 전 세액
+            surtax:
+              type: integer
+              description: 중과세액
+            totalTax:
+              type: integer
+              description: 총 세액
+            applies:
+              type: object
+              properties:
+                oneHouseExemption:
+                  type: boolean
+                  description: 1세대1주택 비과세 적용 여부
+                longHoldDeduction:
+                  type: number
+                  description: 장기보유공제율 (0~1)
+                isAdjustedArea:
+                  type: boolean
+                  description: 조정대상지역 여부
+                multiHouseSurtax:
+                  type: boolean
+                  description: 다주택 중과 적용 여부
+                shortTermSurtax:
+                  type: boolean
+                  description: 단기매매 중과 적용 여부
+            details:
+              type: object
+              properties:
+                holdingPeriodYears:
+                  type: integer
+                  description: 보유기간 (년)
+                taxableGain:
+                  type: integer
+                  description: 양도차익
+                deductions:
+                  type: integer
+                  description: 공제 합계
+                taxBase:
+                  type: integer
+                  description: 과세표준
+            appliedRules:
+              type: array
+              items:
+                type: string
+              description: 적용된 규칙 IDs
+            lawVersions:
+              type: array
+              items:
+                type: object
+                properties:
+                  law_id:
+                    type: string
+                  version_date:
+                    type: string
+                    format: date
+              description: 사용된 법령 버전
+            notes:
+              type: string
+              description: 참고사항/면책문구
+        timestamp:
+          type: string
+          format: date-time
+
+    AcquisitionTaxResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            tax:
+              type: integer
+              description: 취득세액
+            rate:
+              type: number
+              description: 적용 세율 (%)
+            isAdjustedArea:
+              type: boolean
+              description: 조정대상지역 여부
+            notes:
+              type: string
+              description: 참고사항
+        timestamp:
+          type: string
+          format: date-time
+
+    ActiveRulesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            capitalGains:
+              type: object
+              description: 양도소득세 규칙
+            acquisitionTax:
+              type: object
+              description: 취득세 규칙
+        timestamp:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: 취득일은 YYYY-MM-DD 형식이어야 합니다.
+        timestamp:
+          type: string
+          format: date-time

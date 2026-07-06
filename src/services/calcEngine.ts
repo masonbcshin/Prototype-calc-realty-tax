@@ -348,10 +348,11 @@ export function calculateAcquisitionTax(
       rate = 1;
     } else if (acquisitionPrice <= 900000000) {
       // 6억 초과 ~ 9억 이하: 취득가액에 따라 1%~3%로 선형 증가하는 슬라이딩 세율
-      //   세율(%) = (취득가액 ÷ 1억 × 2 ÷ 3 − 3), 소수점 5째자리에서 반올림(4자리)
-      //   경계 연속: 6억 → 1%, 7.5억 → 2%, 9억 → 3%
+      //   법령상 세율(비율) = (취득가액 ÷ 1억 × 2 ÷ 3 − 3) × 1/100,
+      //   비율 소수 5째자리에서 반올림하여 4째자리까지 → 백분율(%)로는 소수 2째자리까지
+      //   경계 연속: 6억 → 1%, 7.5억 → 2%, 8억 → 2.33%, 9억 → 3%
       const priceInEok = acquisitionPrice / 100000000;
-      rate = Math.round((priceInEok * (2 / 3) - 3) * 10000) / 10000;
+      rate = Math.round((priceInEok * (2 / 3) - 3) * 100) / 100;
     } else {
       rate = 3;
     }

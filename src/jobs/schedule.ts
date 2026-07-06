@@ -67,12 +67,26 @@ export async function runLawCollectionJob(): Promise<{
           // 활성 규칙이 아닌 '새로 만든 후보 규칙' 자체를 검증한다.
           // (샘플 케이스는 전부 양도소득세라 capital_gains 후보만 실질 검증 가능)
           const candidateRules = ruleType === 'capital_gains'
-            ? getRuleById(db, ruleResult.ruleId) ?? undefined
+            ? getRuleById(db, ruleResult.ruleId)
             : undefined;
+
+          // 후보 규칙 로드 실패 시, 활성 규칙으로 잘못 검증한 뒤 미검증 규칙이
+          // 활성화되는 안전 게이트 우회를 막기 위해 활성화하지 않고 건너뛴다.
+          if (ruleType === 'capital_gains' && candidateRules === null) {
+            jobResult.error = `후보 규칙을 로드할 수 없습니다. (ruleId: ${ruleResult.ruleId})`;
+            console.error(`[${result.law_id}] ${jobResult.error}`);
+            saveAuditLog(db, 'error', {
+              type: 'rule_load_failure',
+              law_id: result.law_id,
+              rule_id: ruleResult.ruleId
+            });
+            results.push(jobResult);
+            continue;
+          }
 
           // 테스트 실행
           console.log(`[${result.law_id}] 샘플 테스트 실행 중...`);
-          const testResults = runSampleTests(db, candidateRules);
+          const testResults = runSampleTests(db, candidateRules ?? undefined);
 
           if (testResults.passed === testResults.total) {
             // 모든 테스트 통과 - 규칙 활성화

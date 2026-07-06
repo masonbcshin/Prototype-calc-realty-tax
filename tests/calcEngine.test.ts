@@ -238,10 +238,10 @@ describe('계산 엔진 테스트', () => {
       expect(mid.rate).toBe(2);
       expect(mid.tax).toBe(15000000);
 
-      // 8억은 (8 × 2/3 − 3) = 2.3333%
+      // 8억은 (8 × 2/3 − 3) = 2.33% (비율 4자리 반올림 = 백분율 2자리)
       const result = calculateAcquisitionTax(800000000, 1, false);
-      expect(result.rate).toBe(2.3333);
-      expect(result.tax).toBe(18666400);
+      expect(result.rate).toBe(2.33);
+      expect(result.tax).toBe(18640000);
 
       // 6억/9억 경계는 각각 1%, 3%로 연속
       expect(calculateAcquisitionTax(600000001, 1, false).rate).toBeCloseTo(1, 4);

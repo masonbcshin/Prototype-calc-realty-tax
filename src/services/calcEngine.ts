@@ -60,11 +60,11 @@ export function getLongHoldDeductionRate(
   }
   
   // 1세대1주택의 경우 거주기간 공제 추가 (최대 80%)
+  // 소득세법 제95조제2항 표2: 보유 3년 이상부터 연 4%(최대 40%),
+  //   거주 2년 이상부터 연 4%(최대 40%). 예: 보유10·거주10 → 40+40 = 80%
   if (isOneHouse && residenceYears >= 2) {
-    // 1세대1주택 장기보유특별공제: 보유 3년부터 연 4%, 거주 2년부터 연 4%
-    // 최대 보유 40% + 거주 40% = 80%
-    const extraHoldRate = Math.min(40, Math.max(0, (holdingYears - 2)) * 4);
-    const extraResidenceRate = Math.min(40, Math.max(0, (residenceYears - 1)) * 4);
+    const extraHoldRate = holdingYears >= 3 ? Math.min(40, holdingYears * 4) : 0;
+    const extraResidenceRate = residenceYears >= 2 ? Math.min(40, residenceYears * 4) : 0;
     return Math.min(80, extraHoldRate + extraResidenceRate);
   }
   
@@ -277,8 +277,8 @@ export function calculateCapitalGainsTax(
   let appliedBracket: TaxBracket | null = null;
   
   if (isShortTermSurtax) {
-    // 단기매매: 고정 세율 적용
-    taxBeforeSurtax = Math.floor(taxBase * (effectiveTaxRate / 100));
+    // 단기매매: 고정 세율 적용 (부동소수점 오차 방지를 위해 나눗셈을 마지막에 수행)
+    taxBeforeSurtax = Math.floor((taxBase * effectiveTaxRate) / 100);
   } else {
     // 누진세 계산
     const taxResult = calculateProgressiveTax(taxBase, rules.capital_gains.tax_brackets);

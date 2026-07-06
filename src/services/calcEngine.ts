@@ -343,11 +343,15 @@ export function calculateAcquisitionTax(
   } else if (ownerCount === 2 && isAdjustedArea) {
     rate = 8;
   } else {
-    // 일반 주택 취득세율
+    // 일반 주택 취득세율 (지방세법 제11조제1항제8호)
     if (acquisitionPrice <= 600000000) {
       rate = 1;
     } else if (acquisitionPrice <= 900000000) {
-      rate = 2;
+      // 6억 초과 ~ 9억 이하: 취득가액에 따라 1%~3%로 선형 증가하는 슬라이딩 세율
+      //   세율(%) = (취득가액 ÷ 1억 × 2 ÷ 3 − 3), 소수점 5째자리에서 반올림(4자리)
+      //   경계 연속: 6억 → 1%, 7.5억 → 2%, 9억 → 3%
+      const priceInEok = acquisitionPrice / 100000000;
+      rate = Math.round((priceInEok * (2 / 3) - 3) * 10000) / 10000;
     } else {
       rate = 3;
     }

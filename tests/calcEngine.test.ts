@@ -232,10 +232,20 @@ describe('계산 엔진 테스트', () => {
       expect(result.tax).toBe(5000000);
     });
 
-    test('9억 이하 - 2%', () => {
+    test('6억 초과 9억 이하 - 선형 슬라이딩 세율', () => {
+      // 7.5억(구간 중간값)은 정확히 2%
+      const mid = calculateAcquisitionTax(750000000, 1, false);
+      expect(mid.rate).toBe(2);
+      expect(mid.tax).toBe(15000000);
+
+      // 8억은 (8 × 2/3 − 3) = 2.3333%
       const result = calculateAcquisitionTax(800000000, 1, false);
-      expect(result.rate).toBe(2);
-      expect(result.tax).toBe(16000000);
+      expect(result.rate).toBe(2.3333);
+      expect(result.tax).toBe(18666400);
+
+      // 6억/9억 경계는 각각 1%, 3%로 연속
+      expect(calculateAcquisitionTax(600000001, 1, false).rate).toBeCloseTo(1, 4);
+      expect(calculateAcquisitionTax(900000000, 1, false).rate).toBe(3);
     });
 
     test('다주택자 조정지역 - 중과', () => {

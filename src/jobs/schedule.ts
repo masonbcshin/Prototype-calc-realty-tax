@@ -6,7 +6,7 @@
 import cron from 'node-cron';
 import { getDatabase } from '../db/init';
 import { collectAllLaws } from '../services/lawCollector';
-import { processLawToRule, activateRule, saveAuditLog } from '../services/ruleManager';
+import { processLawToRule, activateRule, saveAuditLog, getRuleById } from '../services/ruleManager';
 import { runSampleTests } from './testRunner';
 
 const LAW_API_KEY = process.env.LAW_API_KEY || '';
@@ -62,13 +62,20 @@ export async function runLawCollectionJob(): Promise<{
         jobResult.ruleCreated = ruleResult.success;
         
         if (ruleResult.success && ruleResult.ruleId) {
+          const ruleType = result.law_id.includes('LOCAL') ? 'acquisition_tax' : 'capital_gains';
+
+          // 활성 규칙이 아닌 '새로 만든 후보 규칙' 자체를 검증한다.
+          // (샘플 케이스는 전부 양도소득세라 capital_gains 후보만 실질 검증 가능)
+          const candidateRules = ruleType === 'capital_gains'
+            ? getRuleById(db, ruleResult.ruleId) ?? undefined
+            : undefined;
+
           // 테스트 실행
           console.log(`[${result.law_id}] 샘플 테스트 실행 중...`);
-          const testResults = runSampleTests(db);
-          
+          const testResults = runSampleTests(db, candidateRules);
+
           if (testResults.passed === testResults.total) {
             // 모든 테스트 통과 - 규칙 활성화
-            const ruleType = result.law_id.includes('LOCAL') ? 'acquisition_tax' : 'capital_gains';
             activateRule(db, ruleType, ruleResult.ruleId);
             jobResult.ruleActivated = true;
             console.log(`[${result.law_id}] 규칙 활성화 완료`);

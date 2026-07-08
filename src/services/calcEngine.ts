@@ -60,11 +60,11 @@ export function getLongHoldDeductionRate(
   }
   
   // 1세대1주택의 경우 거주기간 공제 추가 (최대 80%)
+  // 소득세법 제95조제2항 표2: 보유 3년 이상부터 연 4%(최대 40%),
+  //   거주 2년 이상부터 연 4%(최대 40%). 예: 보유10·거주10 → 40+40 = 80%
   if (isOneHouse && residenceYears >= 2) {
-    // 1세대1주택 장기보유특별공제: 보유 3년부터 연 4%, 거주 2년부터 연 4%
-    // 최대 보유 40% + 거주 40% = 80%
-    const extraHoldRate = Math.min(40, Math.max(0, (holdingYears - 2)) * 4);
-    const extraResidenceRate = Math.min(40, Math.max(0, (residenceYears - 1)) * 4);
+    const extraHoldRate = holdingYears >= 3 ? Math.min(40, holdingYears * 4) : 0;
+    const extraResidenceRate = residenceYears >= 2 ? Math.min(40, residenceYears * 4) : 0;
     return Math.min(80, extraHoldRate + extraResidenceRate);
   }
   
@@ -277,8 +277,8 @@ export function calculateCapitalGainsTax(
   let appliedBracket: TaxBracket | null = null;
   
   if (isShortTermSurtax) {
-    // 단기매매: 고정 세율 적용
-    taxBeforeSurtax = Math.floor(taxBase * (effectiveTaxRate / 100));
+    // 단기매매: 고정 세율 적용 (부동소수점 오차 방지를 위해 나눗셈을 마지막에 수행)
+    taxBeforeSurtax = Math.floor((taxBase * effectiveTaxRate) / 100);
   } else {
     // 누진세 계산
     const taxResult = calculateProgressiveTax(taxBase, rules.capital_gains.tax_brackets);
@@ -343,11 +343,16 @@ export function calculateAcquisitionTax(
   } else if (ownerCount === 2 && isAdjustedArea) {
     rate = 8;
   } else {
-    // 일반 주택 취득세율
+    // 일반 주택 취득세율 (지방세법 제11조제1항제8호)
     if (acquisitionPrice <= 600000000) {
       rate = 1;
     } else if (acquisitionPrice <= 900000000) {
-      rate = 2;
+      // 6억 초과 ~ 9억 이하: 취득가액에 따라 1%~3%로 선형 증가하는 슬라이딩 세율
+      //   법령상 세율(비율) = (취득가액 ÷ 1억 × 2 ÷ 3 − 3) × 1/100,
+      //   비율 소수 5째자리에서 반올림하여 4째자리까지 → 백분율(%)로는 소수 2째자리까지
+      //   경계 연속: 6억 → 1%, 7.5억 → 2%, 8억 → 2.33%, 9억 → 3%
+      const priceInEok = acquisitionPrice / 100000000;
+      rate = Math.round((priceInEok * (2 / 3) - 3) * 100) / 100;
     } else {
       rate = 3;
     }

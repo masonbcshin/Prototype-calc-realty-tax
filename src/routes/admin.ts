@@ -12,11 +12,13 @@ import {
   processLawToRule,
   activateRule,
   rollbackRule,
+  getRuleById,
   getRuleHistory,
   getAdjustedAreas,
   updateAdjustedArea,
   saveAuditLog
 } from '../services/ruleManager';
+import { runSampleTests } from '../jobs/testRunner';
 
 const router = Router();
 
@@ -257,7 +259,11 @@ router.post('/rules/activate', adminAuth, [
   body('ruleId')
     .isString()
     .notEmpty()
-    .withMessage('규칙 ID는 필수입니다.')
+    .withMessage('규칙 ID는 필수입니다.'),
+  body('force')
+    .optional()
+    .isBoolean()
+    .withMessage('force는 불리언이어야 합니다.')
 ], (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -271,31 +277,79 @@ router.post('/rules/activate', adminAuth, [
     };
     return res.status(400).json(response);
   }
-  
+
   try {
-    const { ruleType, ruleId } = req.body;
-    
+    const { ruleType, ruleId, force } = req.body;
+
     const db = getDatabase();
+
+    // 활성화 전 검증 게이트: 무인 안전 구멍을 막기 위해 스케줄러와 동일하게
+    // 후보 규칙 자체를 샘플 케이스로 검증한다. (양도세만 실질 검증 가능)
+    // force=true 이면 게이트를 우회하되 감사로그에 명시한다.
+    if (!force && ruleType === 'capital_gains') {
+      const candidateRules = getRuleById(db, ruleId);
+      if (!candidateRules) {
+        saveAuditLog(db, 'rule_change', {
+          action: 'manual_activate',
+          result: 'rejected_load_failure',
+          rule_type: ruleType,
+          rule_id: ruleId
+        });
+        db.close();
+        const response: ApiResponse<null> = {
+          success: false,
+          error: {
+            code: 'RULE_NOT_FOUND',
+            message: `규칙 ${ruleId}을(를) 로드할 수 없습니다.`
+          },
+          timestamp: new Date().toISOString()
+        };
+        return res.status(404).json(response);
+      }
+
+      const testResults = runSampleTests(db, candidateRules);
+      if (testResults.passed !== testResults.total) {
+        saveAuditLog(db, 'rule_change', {
+          action: 'manual_activate',
+          result: 'blocked_by_gate',
+          rule_type: ruleType,
+          rule_id: ruleId,
+          test_results: { passed: testResults.passed, total: testResults.total }
+        });
+        db.close();
+        const response: ApiResponse<null> = {
+          success: false,
+          error: {
+            code: 'GATE_FAILED',
+            message: `샘플 검증 실패(${testResults.passed}/${testResults.total})로 활성화가 거부되었습니다. force로 우회할 수 있습니다.`
+          },
+          timestamp: new Date().toISOString()
+        };
+        return res.status(422).json(response);
+      }
+    }
+
     activateRule(db, ruleType, ruleId);
-    
+
     saveAuditLog(db, 'rule_change', {
-      action: 'manual_activate',
+      action: force ? 'forced_activate' : 'manual_activate',
+      result: 'activated',
       rule_type: ruleType,
       rule_id: ruleId
     });
-    
+
     db.close();
-    
+
     const response: ApiResponse<{ message: string }> = {
       success: true,
       data: {
-        message: `규칙 ${ruleId} 활성화 완료`
+        message: `규칙 ${ruleId} 활성화 완료${force ? ' (force)' : ''}`
       },
       timestamp: new Date().toISOString()
     };
-    
+
     return res.json(response);
-    
+
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     

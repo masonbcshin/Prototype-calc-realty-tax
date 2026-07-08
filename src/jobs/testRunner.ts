@@ -4,7 +4,7 @@
  */
 
 import Database from 'better-sqlite3';
-import { CalculationInput } from '../types';
+import { CalculationInput, TaxRules } from '../types';
 import { calculateCapitalGainsTax } from '../services/calcEngine';
 import { getAllActiveRules, isAdjustedArea } from '../services/ruleManager';
 import { DEFAULT_RULES } from '../db/schema';
@@ -198,17 +198,23 @@ export interface TestResult {
 
 /**
  * 샘플 테스트 실행
+ *
+ * @param overrideRules 검증 대상 규칙. 지정 시 활성 규칙 대신 이 규칙으로 계산한다.
+ *   규칙 활성화 전 후보 규칙(candidate)을 실제로 검증하기 위한 용도.
  */
-export function runSampleTests(db: Database.Database): {
+export function runSampleTests(
+  db: Database.Database,
+  overrideRules?: TaxRules
+): {
   passed: number;
   total: number;
   results: TestResult[];
 } {
   const results: TestResult[] = [];
   let passed = 0;
-  
+
   const activeRules = getAllActiveRules(db);
-  const rules = activeRules.capitalGains.rules || DEFAULT_RULES.capital_gains.rules;
+  const rules = overrideRules || activeRules.capitalGains.rules || DEFAULT_RULES.capital_gains.rules;
   const ruleIds = activeRules.capitalGains.ruleId 
     ? [activeRules.capitalGains.ruleId] 
     : ['DEFAULT_RULE'];

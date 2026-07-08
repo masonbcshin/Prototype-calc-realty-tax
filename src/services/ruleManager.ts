@@ -64,6 +64,30 @@ export function getAllActiveRules(
 }
 
 /**
+ * 규칙 ID로 규칙(json_blob) 조회
+ * 활성/비활성 여부와 무관하게 특정 규칙 자체를 검증할 때 사용
+ */
+export function getRuleById(
+  db: Database.Database,
+  ruleId: string
+): TaxRules | null {
+  const stmt = db.prepare(`
+    SELECT json_blob FROM rules WHERE rule_id = ?
+  `);
+
+  const row = stmt.get(ruleId) as { json_blob: string } | undefined;
+  if (!row) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(row.json_blob) as TaxRules;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * 규칙 저장
  */
 export function saveRule(

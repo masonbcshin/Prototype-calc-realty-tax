@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# 도메인은 운영 배포 도메인으로 교체하세요.
+Sitemap: https://tax.money-issue.com/sitemap.xml

@@ -255,3 +255,39 @@ footer {
   color: #a0aec0;
   font-size: 0.875rem;
 }
+
+/* 결과 영역 높이 예약 — 결과 표시 시 레이아웃 시프트(CLS) 방지 */
+.result-card {
+  min-height: 360px;
+}
+
+/* SEO 정적 콘텐츠 섹션 */
+.content-sections {
+  margin-top: 3rem;
+}
+
+.content-sections section {
+  margin-bottom: 2rem;
+}
+
+.content-sections h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 1rem 0 0.25rem;
+}
+
+.content-sections dt {
+  font-weight: 600;
+  color: #2d3748;
+  margin-top: 0.5rem;
+}
+
+.content-sections dd {
+  color: #4a5568;
+  margin-left: 0;
+}
+
+.content-sections p {
+  color: #4a5568;
+}

@@ -4,8 +4,89 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>부동산 거래세/양도소득세 계산기</title>
-    <meta name="description" content="법제처 Open API 기반 부동산 양도소득세, 취득세 자동 계산 서비스" />
+
+    <!-- 기본 SEO -->
+    <title>부동산 양도소득세·취득세 계산기 (참고용)</title>
+    <meta
+      name="description"
+      content="양도소득세·취득세를 입력값으로 계산해 보는 참고용 계산기입니다. 보유·거주기간, 다주택, 공동명의 지분, 취득가액 구간별 세율을 반영합니다."
+    />
+    <!-- canonical/og:url/sitemap의 도메인은 운영 배포 도메인으로 교체하세요. -->
+    <link rel="canonical" href="https://tax.money-issue.com/" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="부동산 세금 계산기 (참고용)" />
+    <meta property="og:title" content="부동산 양도소득세·취득세 계산기 (참고용)" />
+    <meta
+      property="og:description"
+      content="양도소득세·취득세를 입력값으로 계산해 보는 참고용 계산기입니다. 보유·거주기간, 다주택, 공동명의 지분, 취득가액 구간별 세율을 반영합니다."
+    />
+    <meta property="og:url" content="https://tax.money-issue.com/" />
+    <meta property="og:locale" content="ko_KR" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="부동산 양도소득세·취득세 계산기 (참고용)" />
+    <meta
+      name="twitter:description"
+      content="양도소득세·취득세를 입력값으로 계산해 보는 참고용 계산기입니다."
+    />
+
+    <!-- 구조화 데이터: 계산기 정의 (허위 평점/리뷰 미포함) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "부동산 양도소득세·취득세 계산기 (참고용)",
+        "url": "https://tax.money-issue.com/",
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "ko-KR",
+        "description": "양도소득세·취득세를 입력값으로 계산해 보는 참고용 계산기. 보유·거주기간, 다주택, 공동명의 지분, 취득가액 구간별 세율을 반영합니다.",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "KRW"
+        }
+      }
+    </script>
+
+    <!-- 구조화 데이터: FAQ (리치 스니펫 대상) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "이 계산기의 결과는 실제 납부세액과 동일한가요?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "참고용 추정치입니다. 개별 사정·최신 개정에 따라 달라질 수 있으므로 실제 납부 전 전문가 확인을 권장합니다."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "공동명의는 어떻게 반영되나요?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "양도차익을 지분비율만큼 안분해 개인별 기본공제·누진세율을 적용한 결과를 보여 줍니다."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "취득세 6억~9억 구간 세율은 어떻게 계산되나요?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "6억 이하 1%, 6억 초과 9억 이하 구간은 취득가액에 따라 1%에서 3%로 선형 증가하는 세율, 9억 초과 3%를 적용합니다."
+            }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

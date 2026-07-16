@@ -23,6 +23,8 @@ if (!template.includes(marker)) {
   process.exit(1)
 }
 
-const html = template.replace(marker, `<div id="root">${appHtml}</div>`)
+// 함수 replacer로 삽입해 렌더 HTML의 '$'(예: $&, $1)가 특수 치환 패턴으로
+// 해석되지 않도록 한다(리터럴 삽입).
+const html = template.replace(marker, () => `<div id="root">${appHtml}</div>`)
 writeFileSync(templatePath, html)
 console.log('[prerender] dist/index.html에 정적 마크업을 주입했습니다.')

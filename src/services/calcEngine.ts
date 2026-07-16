@@ -136,7 +136,8 @@ export function checkOneHouseExemption(
   
   // 양도가액이 12억원 초과시 부분 과세
   if (input.dispositionPrice > exemption.max_exemption_amount) {
-    const gain = input.dispositionPrice - input.acquisitionPrice;
+    // 양도차익은 필요경비를 차감한 값(양도가−취득가−필요경비) 기준으로 안분한다.
+    const gain = input.dispositionPrice - input.acquisitionPrice - (input.necessaryExpenses || 0);
     // 12억 초과분에 대한 과세 비율 계산
     const taxableRatio = (input.dispositionPrice - exemption.max_exemption_amount) / input.dispositionPrice;
     const taxableAmount = Math.floor(gain * taxableRatio);
@@ -276,8 +277,9 @@ export function calculateCapitalGainsTax(
   // 세율 계산은 곱셈 우선(× rate / 100)으로 부동소수점 절사를 방지한다.
   const longHoldDeduction = Math.floor((effectiveGain * longHoldDeductionRate) / 100);
   const basicDeduction = rules.capital_gains.basic_deduction;
-  // 필요경비도 지분비율만큼 안분해 공제합계에 반영(과세표준과 표시 일치)
-  const totalDeductions = longHoldDeduction + basicDeduction + Math.floor(necessaryExpenses * shareRatio);
+  // 필요경비는 양도차익 정의(양도가−취득가−필요경비)에 이미 반영되어 effectiveGain에
+  // 포함되므로 별도 공제로 다시 더하지 않는다. 이로써 taxableGain − deductions = taxBase 성립.
+  const totalDeductions = longHoldDeduction + basicDeduction;
 
   const taxBase = Math.max(0, effectiveGain - longHoldDeduction - basicDeduction);
   

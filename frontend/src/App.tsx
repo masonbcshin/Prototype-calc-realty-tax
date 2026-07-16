@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import TaxCalculator from './components/TaxCalculator'
+import ContentSections from './components/ContentSections'
 
 function App() {
   const [activeTab, setActiveTab] = useState<'capital' | 'acquisition'>('capital')
@@ -43,6 +44,8 @@ function App() {
       </div>
 
       <TaxCalculator type={activeTab} />
+
+      <ContentSections />
 
       <footer>
         <p>법제처 국가법령정보센터 Open API 기반</p>

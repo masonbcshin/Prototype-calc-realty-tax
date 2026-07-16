@@ -163,9 +163,9 @@ function TaxCalculator({ type }: TaxCalculatorProps) {
           {error && <div className="error-message">{error}</div>}
         </div>
 
-        <div className="card">
+        <div className="card result-card">
           <h2>계산 결과</h2>
-          
+
           {loading && (
             <div className="loading">
               <div className="spinner"></div>
@@ -353,9 +353,9 @@ function TaxCalculator({ type }: TaxCalculatorProps) {
         {error && <div className="error-message">{error}</div>}
       </div>
 
-      <div className="card">
+      <div className="card result-card">
         <h2>계산 결과</h2>
-        
+
         {loading && (
           <div className="loading">
             <div className="spinner"></div>

@@ -102,8 +102,8 @@ export function calculateProgressiveTax(taxBase: number, brackets: TaxBracket[])
     appliedBracket = brackets[brackets.length - 1];
   }
   
-  // 세액 = 과세표준 × 세율 - 누진공제액
-  const tax = Math.floor(taxBase * (appliedBracket.rate / 100) - appliedBracket.deduction);
+  // 세액 = 과세표준 × 세율 - 누진공제액 (곱셈 우선으로 절사 방지)
+  const tax = Math.floor((taxBase * appliedBracket.rate) / 100 - appliedBracket.deduction);
   
   return { tax: Math.max(0, tax), appliedBracket };
 }
@@ -176,23 +176,24 @@ export function calculateSurtax(
   if (input.ownerCount >= 2) {
     isMultiHouseSurtax = true;
     
+    // 중과세액 = 기본세액 × 추가세율 (곱셈 우선으로 절사 방지)
     if (isAdjustedArea) {
       // 조정대상지역 내 다주택
       if (input.ownerCount === 2) {
         const extraRate = rules.adjusted_area.two_houses.extra_rate;
-        surtax = Math.floor(baseTax * (extraRate / 100));
+        surtax = Math.floor((baseTax * extraRate) / 100);
       } else {
         const extraRate = rules.adjusted_area.three_or_more.extra_rate;
-        surtax = Math.floor(baseTax * (extraRate / 100));
+        surtax = Math.floor((baseTax * extraRate) / 100);
       }
     } else {
       // 조정대상지역 외 다주택
       if (input.ownerCount === 2) {
         const extraRate = rules.multi_house.two_houses.extra_rate;
-        surtax = Math.floor(baseTax * (extraRate / 100));
+        surtax = Math.floor((baseTax * extraRate) / 100);
       } else {
         const extraRate = rules.multi_house.three_or_more.extra_rate;
-        surtax = Math.floor(baseTax * (extraRate / 100));
+        surtax = Math.floor((baseTax * extraRate) / 100);
       }
     }
   }
@@ -265,11 +266,18 @@ export function calculateCapitalGainsTax(
     getLongHoldDeductionRate(holdingPeriodYears, residenceYears, rules.capital_gains, isOneHouse);
   
   // 6. 과세표준 계산
-  const effectiveGain = exemptionResult.partialTax ? exemptionResult.taxableAmount : taxableGain;
-  const longHoldDeduction = Math.floor(effectiveGain * (longHoldDeductionRate / 100));
+  //    공동명의: 양도차익을 지분비율만큼 안분하여 개인별로 과세한다.
+  //    (각 공동소유자는 자신 지분의 차익에 대해 기본공제·누진세율을 개별 적용받음)
+  const shareRatio = input.shareRatio && input.shareRatio > 0 && input.shareRatio <= 1
+    ? input.shareRatio
+    : 1;
+  const grossGain = exemptionResult.partialTax ? exemptionResult.taxableAmount : taxableGain;
+  const effectiveGain = Math.floor(grossGain * shareRatio);
+  // 세율 계산은 곱셈 우선(× rate / 100)으로 부동소수점 절사를 방지한다.
+  const longHoldDeduction = Math.floor((effectiveGain * longHoldDeductionRate) / 100);
   const basicDeduction = rules.capital_gains.basic_deduction;
   const totalDeductions = longHoldDeduction + basicDeduction + necessaryExpenses;
-  
+
   const taxBase = Math.max(0, effectiveGain - longHoldDeduction - basicDeduction);
   
   // 7. 세액 계산
@@ -358,6 +366,7 @@ export function calculateAcquisitionTax(
     }
   }
   
-  const tax = Math.floor(acquisitionPrice * (rate / 100));
+  // 세액 = 취득가액 × 세율 (곱셈 우선으로 절사 방지)
+  const tax = Math.floor((acquisitionPrice * rate) / 100);
   return { tax, rate };
 }

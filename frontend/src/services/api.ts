@@ -13,6 +13,8 @@ interface CapitalGainsInput {
   ownerCount: number
   isPrimaryResidence?: boolean
   residenceYears?: number
+  necessaryExpenses?: number
+  shareRatio?: number
 }
 
 interface AcquisitionTaxInput {
@@ -58,6 +60,7 @@ export async function calculateCapitalGainsTax(input: CapitalGainsInput) {
       deductions: number
       taxBase: number
     }
+    sourceExcerpt?: string
     notes: string
   }> = await response.json()
 

@@ -14,25 +14,26 @@ import { parseLaw, validateRules } from './lawParser';
 export function getActiveRules(
   db: Database.Database,
   ruleType: string
-): { rules: TaxRules | null; ruleId: string | null; lawVersion: LawVersion | null } {
+): { rules: TaxRules | null; ruleId: string | null; lawVersion: LawVersion | null; sourceExcerpt: string | null } {
   const stmt = db.prepare(`
-    SELECT r.rule_id, r.law_id, r.version_date, r.json_blob
+    SELECT r.rule_id, r.law_id, r.version_date, r.json_blob, r.source_excerpt
     FROM active_rules ar
     JOIN rules r ON ar.rule_id = r.rule_id
     WHERE ar.rule_type = ?
   `);
-  
+
   const result = stmt.get(ruleType) as {
     rule_id: string;
     law_id: string;
     version_date: string;
     json_blob: string;
+    source_excerpt: string | null;
   } | undefined;
-  
+
   if (!result) {
-    return { rules: null, ruleId: null, lawVersion: null };
+    return { rules: null, ruleId: null, lawVersion: null, sourceExcerpt: null };
   }
-  
+
   try {
     const rules = JSON.parse(result.json_blob) as TaxRules;
     return {
@@ -41,10 +42,11 @@ export function getActiveRules(
       lawVersion: {
         law_id: result.law_id,
         version_date: result.version_date
-      }
+      },
+      sourceExcerpt: result.source_excerpt
     };
   } catch {
-    return { rules: null, ruleId: result.rule_id, lawVersion: null };
+    return { rules: null, ruleId: result.rule_id, lawVersion: null, sourceExcerpt: result.source_excerpt };
   }
 }
 
@@ -54,8 +56,8 @@ export function getActiveRules(
 export function getAllActiveRules(
   db: Database.Database
 ): {
-  capitalGains: { rules: TaxRules | null; ruleId: string | null; lawVersion: LawVersion | null };
-  acquisitionTax: { rules: TaxRules | null; ruleId: string | null; lawVersion: LawVersion | null };
+  capitalGains: { rules: TaxRules | null; ruleId: string | null; lawVersion: LawVersion | null; sourceExcerpt: string | null };
+  acquisitionTax: { rules: TaxRules | null; ruleId: string | null; lawVersion: LawVersion | null; sourceExcerpt: string | null };
 } {
   return {
     capitalGains: getActiveRules(db, 'capital_gains'),

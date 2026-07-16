@@ -13,6 +13,7 @@ export interface CalculationInput {
   isPrimaryResidence?: boolean; // 실거주 여부
   residenceYears?: number; // 거주 기간 (년)
   necessaryExpenses?: number; // 필요경비 (원)
+  shareRatio?: number; // 공동명의 지분비율 (0 초과 1 이하, 기본 1 = 단독명의)
 }
 
 // 계산 결과
@@ -43,6 +44,7 @@ export interface CalculationResult {
   // 감사/추적 정보
   appliedRules: string[]; // 적용된 규칙 IDs
   lawVersions: LawVersion[]; // 사용된 법령 버전
+  sourceExcerpt?: string; // 근거 조문 발췌 (F3 투명성)
   notes: string; // 참고사항/면책문구
 }
 

@@ -46,7 +46,11 @@ const calcValidation = [
   body('necessaryExpenses')
     .optional()
     .isInt({ min: 0 })
-    .withMessage('필요경비는 0 이상의 정수여야 합니다.')
+    .withMessage('필요경비는 0 이상의 정수여야 합니다.'),
+  body('shareRatio')
+    .optional()
+    .isFloat({ gt: 0, max: 1 })
+    .withMessage('공동명의 지분비율은 0 초과 1 이하여야 합니다.')
 ];
 
 /**
@@ -97,6 +101,9 @@ router.post('/', calcValidation, (req: Request, res: Response) => {
       lawVersions,
       ruleIds
     );
+
+    // F3 투명성: 근거 조문 발췌 포함 (활성 규칙에 있으면 첨부)
+    result.sourceExcerpt = activeRules.capitalGains.sourceExcerpt || undefined;
     
     // 감사 로그 저장
     const clientIp = anonymizeIp(

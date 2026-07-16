@@ -22,6 +22,7 @@ interface CapitalGainsResult {
     deductions: number
     taxBase: number
   }
+  sourceExcerpt?: string
   notes: string
 }
 
@@ -47,7 +48,8 @@ function TaxCalculator({ type }: TaxCalculatorProps) {
     address: '서울특별시 강남구',
     ownerCount: 1,
     isPrimaryResidence: true,
-    residenceYears: 2
+    residenceYears: 2,
+    shareRatio: 1
   })
 
   // 취득세 폼 데이터
@@ -313,6 +315,22 @@ function TaxCalculator({ type }: TaxCalculatorProps) {
           </div>
 
           <div className="form-group">
+            <label>공동명의 지분비율 (단독명의는 100%)</label>
+            <select
+              value={capitalForm.shareRatio}
+              onChange={e => setCapitalForm({
+                ...capitalForm,
+                shareRatio: parseFloat(e.target.value)
+              })}
+            >
+              <option value={1}>100% (단독명의)</option>
+              <option value={0.5}>50% (부부 공동명의 등)</option>
+              <option value={1/3}>33.33% (3인 공동)</option>
+              <option value={0.25}>25% (4인 공동)</option>
+            </select>
+          </div>
+
+          <div className="form-group">
             <div className="checkbox-group">
               <input
                 type="checkbox"
@@ -394,6 +412,13 @@ function TaxCalculator({ type }: TaxCalculatorProps) {
                 <span className="badge danger">단기매매 중과</span>
               )}
             </div>
+
+            {capitalResult.sourceExcerpt && (
+              <div className="info-box">
+                <strong>근거 조문 발췌</strong>
+                <p>{capitalResult.sourceExcerpt}</p>
+              </div>
+            )}
 
             <div className="info-box">
               {capitalResult.notes}

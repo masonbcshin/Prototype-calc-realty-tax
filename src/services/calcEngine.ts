@@ -276,7 +276,8 @@ export function calculateCapitalGainsTax(
   // 세율 계산은 곱셈 우선(× rate / 100)으로 부동소수점 절사를 방지한다.
   const longHoldDeduction = Math.floor((effectiveGain * longHoldDeductionRate) / 100);
   const basicDeduction = rules.capital_gains.basic_deduction;
-  const totalDeductions = longHoldDeduction + basicDeduction + necessaryExpenses;
+  // 필요경비도 지분비율만큼 안분해 공제합계에 반영(과세표준과 표시 일치)
+  const totalDeductions = longHoldDeduction + basicDeduction + Math.floor(necessaryExpenses * shareRatio);
 
   const taxBase = Math.max(0, effectiveGain - longHoldDeduction - basicDeduction);
   

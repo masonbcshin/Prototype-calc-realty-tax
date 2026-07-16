@@ -325,7 +325,7 @@ function TaxCalculator({ type }: TaxCalculatorProps) {
             >
               <option value={1}>100% (단독명의)</option>
               <option value={0.5}>50% (부부 공동명의 등)</option>
-              <option value={0.3333}>33.33% (3인 공동)</option>
+              <option value={1/3}>33.33% (3인 공동)</option>
               <option value={0.25}>25% (4인 공동)</option>
             </select>
           </div>

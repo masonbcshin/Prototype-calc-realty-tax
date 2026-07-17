@@ -2,7 +2,8 @@
  * 검증 게이트 (CI용)
  *
  * 현재 활성 규칙에 대해 샘플 케이스(runSampleTests)를 실행한다.
- * 하나라도 실패하면 종료 코드 1로 빠져나가 워크플로우의 이후 단계(스냅샷/커밋)를 중단시킨다.
+ * 하나라도 실패하거나 실행 중 오류가 나면 종료 코드 1로 빠져나가
+ * 워크플로우의 이후 단계(스냅샷/커밋)를 중단시킨다.
  * 계산 로직·게이트 로직은 재사용만 하며 수정하지 않는다.
  */
 
@@ -14,9 +15,14 @@ import { runSampleTests } from '../jobs/testRunner';
 const AUDIT_PATH = path.resolve(process.cwd(), 'audit/verify-rules.json');
 
 function main(): void {
+  // DB 커넥션은 예외가 나도 반드시 닫는다.
   const db = getDatabase();
-  const results = runSampleTests(db);
-  db.close();
+  let results: ReturnType<typeof runSampleTests>;
+  try {
+    results = runSampleTests(db);
+  } finally {
+    db.close();
+  }
 
   // 감사 로그 기록 (성공/실패 무관하게 남겨 아티팩트로 업로드)
   fs.mkdirSync(path.dirname(AUDIT_PATH), { recursive: true });
@@ -47,4 +53,10 @@ function main(): void {
   console.log('[verify] 게이트 통과.');
 }
 
-main();
+try {
+  main();
+} catch (err) {
+  // 어떤 오류든 게이트 실패로 처리(프로덕션 보호).
+  console.error('[verify] 실행 오류 — 게이트 실패로 처리:', err instanceof Error ? err.message : err);
+  process.exit(1);
+}

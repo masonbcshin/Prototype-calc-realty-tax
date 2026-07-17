@@ -17,9 +17,19 @@ import { getAllActiveRules } from '../services/ruleManager';
 const OUTPUT_PATH = path.resolve(process.cwd(), 'rules/active-rules.json');
 
 function main(): void {
+  // DB 커넥션은 예외가 나도 반드시 닫는다.
   const db = getDatabase();
-  const active = getAllActiveRules(db);
-  db.close();
+  let active: ReturnType<typeof getAllActiveRules>;
+  try {
+    active = getAllActiveRules(db);
+  } finally {
+    db.close();
+  }
+
+  // 활성 규칙이 없으면(빈/미초기화 DB) null 스냅샷을 커밋하지 않도록 중단한다.
+  if (!active.capitalGains.rules || !active.acquisitionTax.rules) {
+    throw new Error('활성 규칙을 찾을 수 없습니다. 데이터베이스 초기화 상태를 확인하세요.');
+  }
 
   const snapshot = {
     capitalGains: {
@@ -39,4 +49,9 @@ function main(): void {
   console.log(`[export] 활성 규칙 스냅샷 저장: ${OUTPUT_PATH}`);
 }
 
-main();
+try {
+  main();
+} catch (err) {
+  console.error('[export] 실패:', err instanceof Error ? err.message : String(err));
+  process.exit(1);
+}

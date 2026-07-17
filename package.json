@@ -11,7 +11,9 @@
     "test:watch": "jest --watch",
     "lint": "eslint src/**/*.ts tests/**/*.ts",
     "db:init": "ts-node src/db/init.ts",
-    "collect:laws": "ts-node src/jobs/schedule.ts"
+    "collect:laws": "ts-node src/jobs/schedule.ts",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "keywords": [
     "real-estate",
@@ -48,6 +50,7 @@
     "supertest": "^6.3.4",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "wrangler": "^4.112.0"
   }
 }

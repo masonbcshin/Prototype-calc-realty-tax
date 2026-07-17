@@ -20,6 +20,9 @@ data/
 # Coverage
 coverage/
 
+# CI 감사 로그 (아티팩트로만 업로드, 커밋하지 않음)
+audit/
+
 # IDE
 .idea/
 .vscode/

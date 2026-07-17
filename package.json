@@ -11,7 +11,9 @@
     "test:watch": "jest --watch",
     "lint": "eslint src/**/*.ts tests/**/*.ts",
     "db:init": "ts-node src/db/init.ts",
-    "collect:laws": "ts-node src/jobs/schedule.ts"
+    "collect:laws": "ts-node src/jobs/schedule.ts",
+    "verify:rules": "ts-node src/tools/verifyActiveRules.ts",
+    "export:rules": "ts-node src/tools/exportRules.ts"
   },
   "keywords": [
     "real-estate",

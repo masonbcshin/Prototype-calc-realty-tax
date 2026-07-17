@@ -1,24 +1,32 @@
 name: Law Collector
 
+# 트리거: 매일 정기 실행 + 수동 실행만.
+# push 트리거를 두지 않으므로 규칙 커밋이 이 워크플로우를 재트리거하지 않는다(무한 루프 방지).
 on:
-  # 매일 00:00 KST (15:00 UTC 전날)
   schedule:
+    # 00:00 KST = 15:00 UTC (KST = UTC+9). 매일 1회.
     - cron: '0 15 * * *'
-  
-  # 수동 트리거
   workflow_dispatch:
     inputs:
-      force_update:
-        description: 'Force update even if no changes detected'
+      reason:
+        description: '수동 실행 사유 (테스트용)'
         required: false
-        default: 'false'
+        default: 'manual test'
+
+# 봇이 main에 규칙 스냅샷을 push 하려면 쓰기 권한 필요.
+permissions:
+  contents: write
+
+# 동시 실행 방지(수집/커밋 경합 방지).
+concurrency:
+  group: law-collector
+  cancel-in-progress: false
 
 jobs:
-  collect-laws:
+  collect-and-gate:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -30,38 +38,53 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
-
       - name: Initialize database
         run: npm run db:init
 
-      - name: Run law collection
+      # 3) 법령 수집 → 후보 규칙 생성. 후보 규칙은 schedule.ts 내부의
+      #    runSampleTests 게이트를 통과할 때에만 활성 규칙으로 반영된다.
+      - name: Collect laws (candidate rules)
         env:
           LAW_API_KEY: ${{ secrets.LAW_API_KEY }}
           NODE_ENV: production
         run: npm run collect:laws
 
-      - name: Check for changes
-        id: check_changes
+      # 4a) 검증 게이트 ① — 활성 규칙에 대한 샘플 케이스(runSampleTests).
+      #     실패 시 종료코드 1 → 이후 단계(스냅샷/커밋) 중단.
+      - name: Validation gate — sample tests
+        run: npm run verify:rules
+
+      # 4b) 검증 게이트 ② — 골든 대조 + 단위 테스트.
+      - name: Validation gate — golden & unit tests
+        run: npm test
+
+      # 5) 게이트 통과 시에만 활성 규칙 스냅샷(rules/active-rules.json) 생성.
+      - name: Export active rules snapshot
+        run: npm run export:rules
+
+      # 감사 로그 아티팩트 — 게이트 실패 시에도 업로드(실패 원인 보존).
+      - name: Upload audit artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: law-collector-audit
+          path: audit/verify-rules.json
+          if-no-files-found: ignore
+
+      # 6) 스냅샷이 실제로 바뀐 경우에만 봇 커밋 + push(빈 커밋 방지).
+      #    이 단계는 앞선 게이트가 모두 성공해야 도달한다(실패 시 커밋 없음).
+      #    main push는 배포 플랫폼(Git 연동)의 재배포를 트리거한다.
+      #    [skip ci]는 배포 플랫폼 빌드까지 건너뛸 수 있어 넣지 않는다.
+      - name: Commit updated rules
         run: |
-          if [ -f "./data/tax_calculator.db" ]; then
-            echo "changes=true" >> $GITHUB_OUTPUT
-          else
-            echo "changes=false" >> $GITHUB_OUTPUT
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- rules/active-rules.json; then
+            echo "규칙 변경 없음 — 커밋 생략."
+            exit 0
           fi
-
-      - name: Commit and push changes
-        if: steps.check_changes.outputs.changes == 'true'
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add -A
-          git diff --staged --quiet || git commit -m "chore: update law rules [automated]"
-          git push || echo "No changes to push"
-
-      - name: Notify on failure
-        if: failure()
-        run: |
-          echo "Law collection failed. Please check the logs."
-          # 추가: Slack/Email 알림 설정 가능
+          CG=$(node -p "require('./rules/active-rules.json').capitalGains.lawVersion?.version_date || 'n/a'")
+          AT=$(node -p "require('./rules/active-rules.json').acquisitionTax.lawVersion?.version_date || 'n/a'")
+          git add rules/active-rules.json
+          git commit -m "chore(rules): update tax rules (양도세 v${CG}, 취득세 v${AT})"
+          git push

@@ -1,0 +1,231 @@
+{
+  "capitalGains": {
+    "lawVersion": {
+      "law_id": "LAW_DEFAULT_INCOME",
+      "version_date": "2025-01-01"
+    },
+    "sourceExcerpt": "소득세법 제104조(양도소득의 세율), 제95조(양도소득금액의 계산) 기준 기본 규칙",
+    "rules": {
+      "capital_gains": {
+        "basic_deduction": 2500000,
+        "tax_brackets": [
+          {
+            "from": 0,
+            "to": 14000000,
+            "rate": 6,
+            "deduction": 0
+          },
+          {
+            "from": 14000001,
+            "to": 50000000,
+            "rate": 15,
+            "deduction": 1260000
+          },
+          {
+            "from": 50000001,
+            "to": 88000000,
+            "rate": 24,
+            "deduction": 5760000
+          },
+          {
+            "from": 88000001,
+            "to": 150000000,
+            "rate": 35,
+            "deduction": 15440000
+          },
+          {
+            "from": 150000001,
+            "to": 300000000,
+            "rate": 38,
+            "deduction": 19940000
+          },
+          {
+            "from": 300000001,
+            "to": 500000000,
+            "rate": 40,
+            "deduction": 25940000
+          },
+          {
+            "from": 500000001,
+            "to": 1000000000,
+            "rate": 42,
+            "deduction": 35940000
+          },
+          {
+            "from": 1000000001,
+            "to": null,
+            "rate": 45,
+            "deduction": 65940000
+          }
+        ],
+        "long_hold_deduction": [
+          {
+            "from_years": 0,
+            "to_years": 2,
+            "hold_rate": 0,
+            "residence_rate": 0
+          },
+          {
+            "from_years": 2,
+            "to_years": 3,
+            "hold_rate": 0,
+            "residence_rate": 0
+          },
+          {
+            "from_years": 3,
+            "to_years": 4,
+            "hold_rate": 6,
+            "residence_rate": 0
+          },
+          {
+            "from_years": 4,
+            "to_years": 5,
+            "hold_rate": 8,
+            "residence_rate": 0
+          },
+          {
+            "from_years": 5,
+            "to_years": 6,
+            "hold_rate": 10,
+            "residence_rate": 0
+          },
+          {
+            "from_years": 6,
+            "to_years": 7,
+            "hold_rate": 12,
+            "residence_rate": 0
+          },
+          {
+            "from_years": 7,
+            "to_years": 8,
+            "hold_rate": 14,
+            "residence_rate": 0
+          },
+          {
+            "from_years": 8,
+            "to_years": 9,
+            "hold_rate": 16,
+            "residence_rate": 0
+          },
+          {
+            "from_years": 9,
+            "to_years": 10,
+            "hold_rate": 18,
+            "residence_rate": 0
+          },
+          {
+            "from_years": 10,
+            "to_years": 11,
+            "hold_rate": 20,
+            "residence_rate": 0
+          },
+          {
+            "from_years": 11,
+            "to_years": 12,
+            "hold_rate": 22,
+            "residence_rate": 0
+          },
+          {
+            "from_years": 12,
+            "to_years": 13,
+            "hold_rate": 24,
+            "residence_rate": 0
+          },
+          {
+            "from_years": 13,
+            "to_years": 14,
+            "hold_rate": 26,
+            "residence_rate": 0
+          },
+          {
+            "from_years": 14,
+            "to_years": 15,
+            "hold_rate": 28,
+            "residence_rate": 0
+          },
+          {
+            "from_years": 15,
+            "to_years": null,
+            "hold_rate": 30,
+            "residence_rate": 0
+          }
+        ],
+        "one_house_exemption": {
+          "min_hold_years": 2,
+          "min_residence_years": 2,
+          "max_exemption_amount": 1200000000,
+          "condition_description": "1세대 1주택, 보유기간 >= 2년, 거주기간 >= 2년"
+        }
+      },
+      "surtax": {
+        "multi_house": {
+          "two_houses": {
+            "extra_rate": 20
+          },
+          "three_or_more": {
+            "extra_rate": 30
+          }
+        },
+        "adjusted_area": {
+          "two_houses": {
+            "extra_rate": 20
+          },
+          "three_or_more": {
+            "extra_rate": 30
+          }
+        },
+        "short_term": {
+          "under_one_year": {
+            "rate": 70
+          },
+          "one_to_two_years": {
+            "rate": 60
+          }
+        }
+      }
+    }
+  },
+  "acquisitionTax": {
+    "lawVersion": {
+      "law_id": "LAW_DEFAULT_LOCAL",
+      "version_date": "2025-01-01"
+    },
+    "sourceExcerpt": "지방세법 제11조(부동산 취득의 세율) 기준 기본 규칙",
+    "rules": {
+      "acquisition_tax": {
+        "residential": {
+          "standard": [
+            {
+              "max_price": 600000000,
+              "rate": 1
+            },
+            {
+              "max_price": 900000000,
+              "rate": 2
+            },
+            {
+              "max_price": null,
+              "rate": 3
+            }
+          ],
+          "adjusted_area_multi_house": {
+            "two_houses": {
+              "rate": 8
+            },
+            "three_or_more": {
+              "rate": 12
+            }
+          },
+          "non_adjusted_area_multi_house": {
+            "three_or_more": {
+              "rate": 8
+            }
+          }
+        },
+        "non_residential": {
+          "rate": 4
+        }
+      }
+    }
+  }
+}
